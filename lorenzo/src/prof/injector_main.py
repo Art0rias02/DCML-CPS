@@ -5,7 +5,6 @@ import random
 import threading
 import time
 
-import psutil
 from tqdm import tqdm
 
 from LoadInjector import LoadInjector, current_ms

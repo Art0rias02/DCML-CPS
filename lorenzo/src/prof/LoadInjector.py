@@ -1,13 +1,10 @@
 import multiprocessing
 import os.path
 import random
-import signal
 import subprocess
 import tempfile
 import threading
 import time
-import urllib
-from urllib.error import URLError
 from multiprocessing import Pool, Event, cpu_count
 from urllib.request import urlopen
 

@@ -1,4 +1,5 @@
-[{
+[
+    {
     "tag": "HTTP",
     "type":  "HTTPRead",
     "parallel_reads": 1,
@@ -21,4 +22,5 @@
     "n_locks": 50,
     "n_threads": 3
     }
+    
   ]
