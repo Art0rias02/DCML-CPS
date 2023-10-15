@@ -11,7 +11,7 @@ from typing import List
 
 from prof.LoadInjector import LoadInjector
 
-def read_injectors(json_object, inj_duration: int = 2, verbose: bool = True, n_inj: int = -1):
+def read_injectors(json_object, inj_duration: int = 2, verbose: bool = True, n_inj: int = -1) -> List[LoadInjector]:
     """
     Method to read a JSON object and extract injectors that are specified there
     :param inj_duration: number of subsequent observations for which the injection takes place
@@ -60,8 +60,16 @@ def read_injectors(json_object, inj_duration: int = 2, verbose: bool = True, n_i
 
     return json_injectors+inj_to_add
 
-def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj: int, obs_between_inj: int, injectors: List[LoadInjector]):
-    # TODO params and description
+def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj: int, obs_between_inj: int, injectors: List[LoadInjector]) -> None:
+    """
+    Method to perform monitoring during various load tests
+    :param out_filename: filename (as CSV) to log data read from monitoring the system
+    :param obs_interval_sec: lenght in seconds for each observation
+    :param obs_per_inj: number of observations during each injection
+    :param obs_between_inj: number of observations between each injection, marked as 'rest' in the log file
+    :param injectors: list of LoadInjectors to use for testing the system
+    :return: nothing is returned
+    """
 
     # Checking of out_filename already exists: if yes, delete
     if os.path.exists(out_filename):
@@ -74,12 +82,12 @@ def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj
     # Monitoring Loop
     print(f'Monitoring for {max_n_obs} times')
     for obs_count in tqdm(range(max_n_obs), desc='Monitor Progress Bar'):
-        if obs_left_to_change==0 and inj_now is None:
+        if obs_left_to_change<=0 and inj_now is None:
             # Start next Injection
             obs_left_to_change = obs_per_inj
             inj_now = injectors.pop(0)
-            threading.Thread(target=inj_now.inject).start()
-        elif obs_left_to_change==0 and inj_now is not None:
+            inj_now.inject()
+        elif obs_left_to_change<=0 and inj_now is not None:
             # Pause from Injections
             inj_now = None
             obs_left_to_change = obs_between_inj
@@ -94,7 +102,7 @@ def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj
         data_to_log['injector'] = 'rest' if inj_now is None else inj_now.get_name()
         
 
-        # Writing on the command line and as a new line of a CSV file
+        # Writing as a new line of a CSV file
         with open(out_filename, "a", newline="") as csvfile:
             # Create a CSV writer using the field/column names
             writer = csv.DictWriter(csvfile, fieldnames=data_to_log.keys())
@@ -102,7 +110,6 @@ def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj
                 # Write the header row (column names)
                 writer.writeheader()
             writer.writerow(data_to_log)
-        #print(data_to_log)
 
         # Sleeping to synchronize to the obs-interval
         exe_time = time.time() - start_time
@@ -116,11 +123,11 @@ def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj
 
 if __name__ == '__main__':
     # General variables
-    inj_json = 'prof/input_folder/injectors_json.json'
+    inj_json = 'prof/input_folder/injectors_only_cpu.json'
     time_step_sec = 0.2
-    obs_per_inj = 10
-    obs_between_inj = 10
-    n_injectors = 7
+    obs_per_inj = 100
+    obs_between_inj = 30
+    n_injectors = 5
 
     # Extracting definitions of injectors from input JSON
     injectors = read_injectors(inj_json, 
