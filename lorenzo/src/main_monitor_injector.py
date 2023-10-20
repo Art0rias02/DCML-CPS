@@ -59,6 +59,23 @@ def read_injectors(json_object, inj_duration: int = 2, verbose: bool = True, n_i
 
     return json_injectors+inj_to_add
 
+def monitor_system() -> dict:
+    """
+    Method to monitor system
+    :return: dictionary with informations about the system
+    """
+    ret_dict = {}
+
+    ret_dict.update(psutil.cpu_times_percent(interval=0.1, percpu=False)._asdict())
+    ret_dict.update(psutil.disk_usage('/')._asdict())
+    ret_dict.update(psutil.cpu_stats()._asdict())
+    ret_dict.update(psutil.swap_memory()._asdict())
+    ret_dict.update(psutil.virtual_memory()._asdict())
+    ret_dict.update(psutil.disk_io_counters()._asdict())
+    ret_dict['time_s'] = time.time()
+
+    return ret_dict
+
 def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj: int, obs_between_inj: int, injectors: List[LoadInjector]) -> None:
     """
     Method to perform monitoring during various load tests
@@ -92,14 +109,8 @@ def main(max_n_obs: int, out_filename: str, obs_interval_sec: float, obs_per_inj
             obs_left_to_change = obs_between_inj
 
         start_time = time.time()
-        # CPU Data
-        data_to_log = psutil.cpu_times_percent(interval=0.1, percpu=False)._asdict()
-        # Disk Data
-        disk_usage = psutil.disk_usage('/')._asdict()
-        data_to_log.update(disk_usage)
-        data_to_log['time_s'] = time.time()
+        data_to_log = monitor_system()
         data_to_log['injector'] = 'rest' if inj_now is None else inj_now.get_name()
-        
 
         # Writing as a new line of a CSV file
         with open(out_filename, "a", newline="") as csvfile:
@@ -124,7 +135,7 @@ if __name__ == '__main__':
     # General variables
     inj_json = 'prof/input_folder/injectors_only_cpu.json'
     time_step_sec = 0.2
-    obs_per_inj = 100
+    obs_per_inj = 50
     obs_between_inj = 30
     n_injectors = 5
 
