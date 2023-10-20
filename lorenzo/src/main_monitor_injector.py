@@ -6,7 +6,6 @@ from tqdm import tqdm
 import json
 import os.path
 import random
-import threading
 from typing import List
 
 from prof.LoadInjector import LoadInjector
